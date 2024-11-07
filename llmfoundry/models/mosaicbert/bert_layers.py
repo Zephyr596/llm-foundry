@@ -251,23 +251,23 @@ class BertUnpadSelfAttention(nn.Module):
         # Option 1: Vanilla Self Attention with ALiBi
         if (not IMPL_USE_FLASH2 and
                 self.p_dropout) or flash_attn_qkvpacked_func is None:
-            # if we have nonzero attention dropout (e.g. during fine-tuning) or no Triton, compute attention in PyTorch
-            # q = qkv[:, :, 0, :, :].permute(0, 2, 1, 3)  # b h s d
-            # k = qkv[:, :, 1, :, :].permute(0, 2, 3, 1)  # b h d s
-            # v = qkv[:, :, 2, :, :].permute(0, 2, 1, 3)  # b h s d
-            # attention_scores = torch.matmul(q, k) / math.sqrt(
-            #     self.attention_head_size)
-            # attention_scores = attention_scores + bias
-            # attention_probs = nn.functional.softmax(attention_scores, dim=-1)
-            # attention_probs = self.dropout(attention_probs)
-            # attention = torch.matmul(attention_probs, v).permute(0, 2, 1,
-            #                                                      3)  # b s h d
-            # Compute attention scores in parallel for each head
-            attention_scores = torch.einsum('b h s d, b h d s -> b h s s', q, k) / math.sqrt(self.attention_head_size)
+            if we have nonzero attention dropout (e.g. during fine-tuning) or no Triton, compute attention in PyTorch
+            q = qkv[:, :, 0, :, :].permute(0, 2, 1, 3)  # b h s d
+            k = qkv[:, :, 1, :, :].permute(0, 2, 3, 1)  # b h d s
+            v = qkv[:, :, 2, :, :].permute(0, 2, 1, 3)  # b h s d
+            attention_scores = torch.matmul(q, k) / math.sqrt(
+                self.attention_head_size)
             attention_scores = attention_scores + bias
             attention_probs = nn.functional.softmax(attention_scores, dim=-1)
             attention_probs = self.dropout(attention_probs)
-            attention = torch.einsum('b h s s, b h s d -> b h s d', attention_probs, v)
+            attention = torch.matmul(attention_probs, v).permute(0, 2, 1,
+                                                                 3)  # b s h d
+            # Compute attention scores in parallel for each head
+            # attention_scores = torch.einsum('b h s d, b h d s -> b h s s', q, k) / math.sqrt(self.attention_head_size)
+            # attention_scores = attention_scores + bias
+            # attention_probs = nn.functional.softmax(attention_scores, dim=-1)
+            # attention_probs = self.dropout(attention_probs)
+            # attention = torch.einsum('b h s s, b h s d -> b h s d', attention_probs, v)
         else:
             # Option 2: Flash Attention 2 with ALiBi
             if IMPL_USE_FLASH2:
