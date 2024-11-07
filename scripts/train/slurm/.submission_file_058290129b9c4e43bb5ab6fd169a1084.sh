@@ -1,0 +1,1 @@
+/ibex/project/c2254/zehua/llm-foundry/scripts/train/slurm/35238913_submission.sh

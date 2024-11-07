@@ -60,6 +60,9 @@ from llmfoundry.models.mpt import (
     MPTModel,
     MPTPreTrainedModel,
 )
+from llmfoundry.models.mosaicbert.mosaic_bert import create_mosaic_bert_mlm 
+from llmfoundry.models.mosaicbert.hf_bert import create_hf_bert_mlm
+
 from llmfoundry.optim import DecoupledLionW
 
 __all__ = [
@@ -86,6 +89,8 @@ __all__ = [
     'optim',
     'tokenizers',
     'utils',
+    'create_mosaic_bert_mlm',
+    'create_hf_bert_mlm'
 ]
 
 __version__ = '0.11.0.dev0'

@@ -77,6 +77,7 @@ def allclose_helper(
 )
 @pytest.mark.parametrize('attn_uses_sequence_id', [True, False])
 @pytest.mark.parametrize('pad_attention_mask', [True, False])
+@pytest.mark.parametrize('sliding_window_size', [-1, 2])
 def test_attn_impl(
     attn_impl_0: str,
     attn_impl_1: str,
@@ -87,6 +88,7 @@ def test_attn_impl(
     attn_type: str,
     attn_uses_sequence_id: bool,
     pad_attention_mask: bool,
+    sliding_window_size: int,
     device: str = 'cuda',
 ):
     """Compare all attn impl with each other.
@@ -122,6 +124,7 @@ def test_attn_impl(
         'clip_qkv': clip_qkv,
         'qk_ln': qk_ln,
         'qk_gn': qk_gn,
+        'sliding_window_size': sliding_window_size,
     })
 
     n, s, f = 2, 4, cfg.d_model
@@ -251,12 +254,13 @@ def test_attn_impl(
         rotary_emb_w_meta_info = None
         if rope:
             rotary_embedding = gen_rotary_embedding(
-                rope_head_dim=cfg.d_model // cfg.n_heads,
                 rope_impl=pos_emb_config['rope_impl'],
                 rope_theta=pos_emb_config['rope_theta'],
                 rope_dail_config=pos_emb_config.get('rope_dail_config', {}),
                 rope_hf_config=pos_emb_config.get('rope_hf_config', {}),
                 max_seq_len=s,
+                d_model=cfg.d_model,
+                n_heads=cfg.n_heads,
             ).to(device)
             pos = torch.arange(s).unsqueeze(0).to(device=device)
             # adjust the position indices to account for padding tokens
@@ -664,12 +668,13 @@ def test_reuse_prev_layer_kv_cache(
         rotary_emb_w_meta_info = None
         if rope:
             rotary_embedding = gen_rotary_embedding(
-                rope_head_dim=cfg['d_model'] // cfg['n_heads'],
                 rope_impl=pos_emb_config['rope_impl'],
                 rope_theta=pos_emb_config['rope_theta'],
                 rope_dail_config=pos_emb_config.get('rope_dail_config', {}),
                 rope_hf_config=pos_emb_config.get('rope_hf_config', {}),
                 max_seq_len=s,
+                d_model=cfg['d_model'],
+                n_heads=cfg['n_heads'],
             ).to(device)
             pos = torch.arange(s).unsqueeze(0).to(device=device)
             # adjust the position indices to account for padding tokens

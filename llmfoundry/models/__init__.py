@@ -15,6 +15,8 @@ from llmfoundry.models.mpt import (
     MPTModel,
     MPTPreTrainedModel,
 )
+from llmfoundry.models.mosaicbert import (create_mosaic_bert_mlm, 
+                                          create_hf_bert_mlm)
 from llmfoundry.registry import models
 
 models.register('mpt_causal_lm', func=ComposerMPTCausalLM)
@@ -37,4 +39,6 @@ __all__ = [
     'FMAPICasualLMEvalWrapper',
     'OpenAIChatAPIEvalWrapper',
     'FMAPIChatAPIEvalWrapper',
+    'create_mosaic_bert_mlm',
+    'create_hf_bert_mlm'
 ]

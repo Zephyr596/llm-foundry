@@ -7,6 +7,7 @@ import functools
 import logging
 import os
 import re
+import warnings
 from collections import OrderedDict
 from typing import (
     Any,
@@ -484,7 +485,7 @@ def build_tokenizer(
         )
 
     if not hasattr(tokenizer, 'eos_token') or tokenizer.eos_token is None:
-        raise ValueError(
+        warnings.warn(
             f'The tokenizer {tokenizer_name} must have an eos_token.',
         )
 

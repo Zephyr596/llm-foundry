@@ -107,7 +107,7 @@ extra_deps['gpu-flash2'] = [
     'flash-attn==2.5.8',
 ]
 
-extra_deps['gpu'] = copy.deepcopy(extra_deps['gpu-flash2'])
+# extra_deps['gpu'] = copy.deepcopy(extra_deps['gpu-flash2'])
 
 extra_deps['peft'] = [
     'mosaicml[peft]>=0.23.4,<0.24',
