@@ -171,7 +171,7 @@ class BertEmbeddings(nn.Module):
         embeddings = inputs_embeds + token_type_embeddings
         # no position embeddings! ALiBi
         embeddings = self.LayerNorm(embeddings)
-        embeddings = self.dropout(embeddings)
+        # embeddings = self.dropout(embeddings)
         return embeddings
 
 
@@ -199,9 +199,14 @@ class BertUnpadSelfAttention(nn.Module):
         self.attention_head_size = int(config.hidden_size /
                                        config.num_attention_heads)
         self.all_head_size = self.num_attention_heads * self.attention_head_size
+
+        # Define QKV and MLP Layer
+        self.Wqkv = nn.Linear(self.all_head_size, 3 * config.hidden_size)
+        self.Wmlp = nn.Linear(self.all_head_size, config.hidden_size)
+        self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.attention_probs_dropout_prob)
         self.p_dropout = config.attention_probs_dropout_prob
-        self.Wqkv = nn.Linear(self.all_head_size, 3 * config.hidden_size)
+        # self.Wqkv = nn.Linear(self.all_head_size, 3 * config.hidden_size)
 
         # Warn if defaulting to pytorch because of import issues
         if flash_attn_qkvpacked_func is None:
@@ -236,7 +241,10 @@ class BertUnpadSelfAttention(nn.Module):
         Returns:
             attention: (total_nnz, dim)
         """
+        hidden_states = self.LayerNorm(hidden_states)
         qkv = self.Wqkv(hidden_states)
+        mlp_output = self.Wmlp(hidden_states)
+
         qkv = bert_padding_module.pad_input(
             qkv, indices, cu_seqlens.shape[0] - 1,
             max_seqlen_in_batch)  # batch, max_seqlen_in_batch, thd
@@ -316,11 +324,16 @@ class BertUnpadSelfAttention(nn.Module):
                 else:
                     attention = flash_attn_qkvpacked_func(qkv, bias)
 
+        # Fused Attention and MLP output
+        attention = rearrange(attention, 'b s h d -> b s (h d)')
+        attention = attention + mlp_output
+
         # attn_mask is 1 for attend and 0 for don't attend
         attention = bert_padding_module.unpad_input_only(
             attention,  # type: ignore
             torch.squeeze(attn_mask) == 1)
-        return rearrange(attention, 'nnz h d -> nnz (h d)')
+        return attention
+        # return rearrange(attention, 'nnz h d -> nnz (h d)')
 
 
 # Copy of transformer's library BertSelfOutput that will not be caught by surgery methods looking for HF BERT modules.
@@ -340,13 +353,15 @@ class BertSelfOutput(nn.Module):
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.LayerNorm = nn.LayerNorm(config.hidden_size,
                                       eps=config.layer_norm_eps)
-        self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        # self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
     def forward(self, hidden_states: torch.Tensor,
                 input_tensor: torch.Tensor) -> torch.Tensor:
+        input_tensor = self.LayerNorm(input_tensor)
         hidden_states = self.dense(hidden_states)
-        hidden_states = self.dropout(hidden_states)
-        hidden_states = self.LayerNorm(hidden_states + input_tensor)
+        # hidden_states = self.dropout(hidden_states)
+        # hidden_states = self.LayerNorm(hidden_states + input_tensor)
+        hidden_states = hidden_states + input_tensor
         return hidden_states
 
 
@@ -357,6 +372,7 @@ class BertUnpadAttention(nn.Module):
         super().__init__()
         self.self = BertUnpadSelfAttention(config)
         self.output = BertSelfOutput(config)
+        self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
 
     def forward(
         self,
@@ -383,14 +399,23 @@ class BertUnpadAttention(nn.Module):
             slopes: None or (batch, heads) or (heads,)
         """
         assert (bias is None) == (slopes is None), f'{bias=}, {slopes=}'
+        # Standardize the input in advance
+        input_tensor = self.LayerNorm(input_tensor)
         self_output = self.self(input_tensor, cu_seqlens, max_s, indices,
                                 attn_mask, bias, slopes)
+        # if subset_idx is not None:
+        #     return self.output(
+        #         bert_padding_module.index_first_axis(self_output, subset_idx),
+        #         bert_padding_module.index_first_axis(input_tensor, subset_idx))
+        # else:
+        #     return self.output(self_output, input_tensor)
         if subset_idx is not None:
-            return self.output(
-                bert_padding_module.index_first_axis(self_output, subset_idx),
-                bert_padding_module.index_first_axis(input_tensor, subset_idx))
+            output = bert_padding_module.index_first_axis(self_output, subset_idx) + \
+                     bert_padding_module.index_first_axis(input_tensor, subset_idx)
         else:
-            return self.output(self_output, input_tensor)
+            output = self_output + input_tensor
+
+        return output
 
 
 class BertGatedLinearUnitMLP(nn.Module):
@@ -416,7 +441,7 @@ class BertGatedLinearUnitMLP(nn.Module):
                                       bias=False)
         self.act = nn.GELU(approximate='none')
         self.wo = nn.Linear(config.intermediate_size, config.hidden_size)
-        self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        # self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.layernorm = nn.LayerNorm(config.hidden_size,
                                       eps=config.layer_norm_eps)
 
@@ -427,17 +452,18 @@ class BertGatedLinearUnitMLP(nn.Module):
             hidden_states (torch.Tensor): The (unpadded) hidden states from
                 the attention layer [nnz, dim].
         """
-        residual_connection = hidden_states
+        hidden_states = self.layernorm(hidden_states)
+        # residual_connection = hidden_states
         # compute the activation
-        hidden_states = self.gated_layers(hidden_states)
-        gated = hidden_states[:, :self.config.intermediate_size]
-        non_gated = hidden_states[:, self.config.intermediate_size:]
+        gated_output = self.gated_layers(hidden_states)
+        gated = gated_output[:, :self.config.intermediate_size]
+        non_gated = gated_output[:, self.config.intermediate_size:]
         hidden_states = self.act(gated) * non_gated
-        hidden_states = self.dropout(hidden_states)
+        # hidden_states = self.dropout(hidden_states)
         # multiply by the second matrix
         hidden_states = self.wo(hidden_states)
         # add the residual connection and post-LN
-        hidden_states = self.layernorm(hidden_states + residual_connection)
+        # hidden_states = self.layernorm(hidden_states + residual_connection)
         return hidden_states
 
 
@@ -448,6 +474,7 @@ class BertLayer(nn.Module):
         super(BertLayer, self).__init__()
         self.attention = BertUnpadAttention(config)
         self.mlp = BertGatedLinearUnitMLP(config)
+        self.layernorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
 
     def forward(
         self,
@@ -474,10 +501,13 @@ class BertLayer(nn.Module):
             slopes: None or (batch, heads) or (heads,)
         """
         assert (bias is None) == (slopes is None), f'{bias=}, {slopes=}'
-        attention_output = self.attention(hidden_states, cu_seqlens, seqlen,
+
+        normalized_hidden_states = self.layer_norm(hidden_states)
+        attention_output = self.attention(normalized_hidden_states, cu_seqlens, seqlen,
                                           subset_idx, indices, attn_mask, bias,
                                           slopes)
-        layer_output = self.mlp(attention_output)
+        mlp_output = self.mlp(normalized_hidden_states)
+        layer_output = hidden_states + attention_output + mlp_output
         return layer_output
 
 
@@ -498,6 +528,7 @@ class BertEncoder(nn.Module):
             [copy.deepcopy(layer) for _ in range(config.num_hidden_layers)])
 
         self.num_attention_heads = config.num_attention_heads
+        self.layernorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
 
         # The alibi mask will be dynamically expanded if it is too small for
         # the input the model receives. But it generally helps to initialize it
@@ -563,6 +594,7 @@ class BertEncoder(nn.Module):
         subset_mask: Optional[torch.Tensor] = None,
     ) -> List[torch.Tensor]:
 
+        hidden_states = self.layernorm(hidden_states)
         extended_attention_mask = attention_mask.unsqueeze(1).unsqueeze(2)
         extended_attention_mask = extended_attention_mask.to(
             dtype=next(self.parameters()).dtype)  # fp16 compatibility
@@ -594,49 +626,55 @@ class BertEncoder(nn.Module):
         alibi_attn_mask = attn_bias + alibi_bias
 
         all_encoder_layers = []
-        if subset_mask is None:
-            for layer_module in self.layer:
-                hidden_states = layer_module(hidden_states,
-                                             cu_seqlens,
-                                             seqlen,
-                                             None,
-                                             indices,
-                                             attn_mask=attention_mask,
-                                             bias=alibi_attn_mask,
-                                             slopes=self.slopes)
-                if output_all_encoded_layers:
-                    all_encoder_layers.append(hidden_states)
-            # Pad inputs and mask. It will insert back zero-padded tokens.
-            # Assume ntokens is total number of tokens (padded and non-padded)
-            # and ntokens_unpad is total number of non-padded tokens.
-            # Then padding performs the following de-compression:
-            #     hidden_states[ntokens_unpad,hidden] -> hidden_states[ntokens,hidden]
-            hidden_states = bert_padding_module.pad_input(
-                hidden_states, indices, batch, seqlen)
-        else:
-            for i in range(len(self.layer) - 1):
-                layer_module = self.layer[i]
-                hidden_states = layer_module(hidden_states,
-                                             cu_seqlens,
-                                             seqlen,
-                                             None,
-                                             indices,
-                                             attn_mask=attention_mask,
-                                             bias=alibi_attn_mask,
-                                             slopes=self.slopes)
-                if output_all_encoded_layers:
-                    all_encoder_layers.append(hidden_states)
-            subset_idx = torch.nonzero(subset_mask[attention_mask_bool],
-                                       as_tuple=False).flatten()
-            hidden_states = self.layer[-1](hidden_states,
-                                           cu_seqlens,
-                                           seqlen,
-                                           subset_idx=subset_idx,
-                                           indices=indices,
-                                           attn_mask=attention_mask,
-                                           bias=alibi_attn_mask,
-                                           slopes=self.slopes)
+        # if subset_mask is None:
+        #     for layer_module in self.layer:
+        #         hidden_states = layer_module(hidden_states,
+        #                                      cu_seqlens,
+        #                                      seqlen,
+        #                                      None,
+        #                                      indices,
+        #                                      attn_mask=attention_mask,
+        #                                      bias=alibi_attn_mask,
+        #                                      slopes=self.slopes)
+        #         if output_all_encoded_layers:
+        #             all_encoder_layers.append(hidden_states)
+        #     # Pad inputs and mask. It will insert back zero-padded tokens.
+        #     # Assume ntokens is total number of tokens (padded and non-padded)
+        #     # and ntokens_unpad is total number of non-padded tokens.
+        #     # Then padding performs the following de-compression:
+        #     #     hidden_states[ntokens_unpad,hidden] -> hidden_states[ntokens,hidden]
+        #     hidden_states = bert_padding_module.pad_input(
+        #         hidden_states, indices, batch, seqlen)
+        # else:
+        #     for i in range(len(self.layer) - 1):
+        #         layer_module = self.layer[i]
+        #         hidden_states = layer_module(hidden_states,
+        #                                      cu_seqlens,
+        #                                      seqlen,
+        #                                      None,
+        #                                      indices,
+        #                                      attn_mask=attention_mask,
+        #                                      bias=alibi_attn_mask,
+        #                                      slopes=self.slopes)
+        #         if output_all_encoded_layers:
+        #             all_encoder_layers.append(hidden_states)
+        #     subset_idx = torch.nonzero(subset_mask[attention_mask_bool],
+        #                                as_tuple=False).flatten()
+        #     hidden_states = self.layer[-1](hidden_states,
+        #                                    cu_seqlens,
+        #                                    seqlen,
+        #                                    subset_idx=subset_idx,
+        #                                    indices=indices,
+        #                                    attn_mask=attention_mask,
+        #                                    bias=alibi_attn_mask,
+        #                                    slopes=self.slopes)
 
+        for layer_module in self.layer:
+            hidden_states = layer_module(hidden_states, cu_seqlens, seqlen, None, indices, attn_mask=attention_mask, bias=alibi_attn_mask, slopes=self.slopes)
+            if output_all_encoded_layers:
+                all_encoder_layers.append(hidden_states)
+
+        hidden_states = bert_padding_module.pad_input(hidden_states, indices, batch, seqlen)
         if not output_all_encoded_layers:
             all_encoder_layers.append(hidden_states)
         return all_encoder_layers
