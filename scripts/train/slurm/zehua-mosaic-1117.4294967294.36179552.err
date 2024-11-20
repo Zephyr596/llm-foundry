@@ -1,0 +1,201 @@
+Loading module for CUDA 11.8
+CUDA 11.8 is now loaded
+Because `predownload` was not specified, it will default to 8*batch_size if batch_size is not None, otherwise 64. Prior to Streaming v0.7.0, `predownload` defaulted to max(batch_size, 256 * batch_size // num_canonical_nodes).
+Because `predownload` was not specified, it will default to 8*batch_size if batch_size is not None, otherwise 64. Prior to Streaming v0.7.0, `predownload` defaulted to max(batch_size, 256 * batch_size // num_canonical_nodes).
+/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/composer/trainer/trainer.py:1347: UserWarning: Setting both `progress_bar` and `log_to_console` both to True is not recommended and willlead to duplicate logs and weird formatting issues. Please set one of them to False for a better logging experience.
+  warnings.warn(
+wandb: Currently logged in as: zehua-cao (zebin-ma-kaust). Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.17.9
+wandb: Run data is saved locally in /ibex/project/c2254/zehua/llm-foundry/scripts/train/wandb/run-20241117_232258-znz3y6ms
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run test-parallel-layers
+wandb: ⭐️ View project at https://wandb.ai/zebin-ma-kaust/llm-foundry-scripts_train-zehua-bert-1117
+wandb: 🚀 View run at https://wandb.ai/zebin-ma-kaust/llm-foundry-scripts_train-zehua-bert-1117/runs/znz3y6ms
+                                                                                                                       ******************************
+Config:
+composer_commit_hash: None
+composer_version: 0.23.5
+enabled_algorithms/LowPrecisionLayerNorm: true
+node_name: unknown because NODENAME environment variable not set
+num_gpus_per_node: 4
+num_nodes: 1
+rank_zero_seed: 17
+
+******************************
+******************************
+Config:
+composer_commit_hash: None
+composer_version: 0.23.5
+enabled_algorithms/LowPrecisionLayerNorm: true
+node_name: unknown because NODENAME environment variable not set
+num_gpus_per_node: 4
+num_nodes: 1
+rank_zero_seed: 17
+
+******************************
+Because `num_canonical_nodes` was not specified, and `shuffle_algo` is py1e, it will default to be equal to physical nodes. Prior to Streaming v0.7.0, `num_canonical_nodes` defaulted to 64 * physical nodes.
+Because `shuffle_block_size` was not specified, it will default to max(4_000_000 // num_canonical_nodes, 1 << 18) if num_canonical_nodes is not None, otherwise 262144. Prior to Streaming v0.7.0, `shuffle_block_size` defaulted to 262144.
+The `replication` arg has been set and training is resuming from sample 0. Make sure you are accounting for sample replication when using StreamingDataset's `state_dict` method for deterministic resumption. Otherwise, you will resume training from the wrong sample.
+
+train          Epoch   0:    0%|                         | 0/23530 [00:00<?, ?ba/s]                                     [ABecause `num_canonical_nodes` was not specified, and `shuffle_algo` is py1e, it will default to be equal to physical nodes. Prior to Streaming v0.7.0, `num_canonical_nodes` defaulted to 64 * physical nodes.
+Because `shuffle_block_size` was not specified, it will default to max(4_000_000 // num_canonical_nodes, 1 << 18) if num_canonical_nodes is not None, otherwise 262144. Prior to Streaming v0.7.0, `shuffle_block_size` defaulted to 262144.
+The `replication` arg has been set and training is resuming from sample 0. Make sure you are accounting for sample replication when using StreamingDataset's `state_dict` method for deterministic resumption. Otherwise, you will resume training from the wrong sample.
+Traceback (most recent call last):
+  File "/ibex/project/c2254/zehua/llm-foundry/scripts/train/train_bert.py", line 272, in <module>
+    main(cfg)
+  File "/ibex/project/c2254/zehua/llm-foundry/scripts/train/train_bert.py", line 258, in main
+    trainer.fit()
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/composer/trainer/trainer.py", line 2340, in fit
+    self._train_loop()
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/composer/trainer/trainer.py", line 2550, in _train_loop
+    total_loss_dict = self._train_batch(use_grad_scaling)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/composer/trainer/trainer.py", line 2759, in _train_batch
+    optimizer.step(
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/optim/lr_scheduler.py", line 75, in wrapper
+    return wrapped(*args, **kwargs)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/optim/optimizer.py", line 391, in wrapper
+    out = func(*args, **kwargs)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/composer/optim/decoupled_weight_decay.py", line 308, in step
+    loss = closure()
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/composer/trainer/trainer.py", line 2761, in <lambda>
+    **kwargs: self._train_microbatches(microbatches, loss_dict, **kwargs).item(),
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/composer/trainer/trainer.py", line 2883, in _train_microbatches
+    microbatch_loss_dict = self._train_microbatch(use_grad_scaling, current_batch_size, is_final_microbatch)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/composer/trainer/trainer.py", line 2959, in _train_microbatch
+    self.state.outputs = self.state.model(self.state.batch)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/parallel/distributed.py", line 1593, in forward
+    else self._run_ddp_forward(*inputs, **kwargs)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/parallel/distributed.py", line 1411, in _run_ddp_forward
+    return self.module(*inputs, **kwargs)  # type: ignore[index]
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/composer/models/huggingface.py", line 488, in forward
+    output = self.model(**batch)  # type: ignore (thirdparty)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/ibex/project/c2254/zehua/llm-foundry/llmfoundry/models/mosaicbert/bert_layers.py", line 984, in forward
+    outputs = self.bert(
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/ibex/project/c2254/zehua/llm-foundry/llmfoundry/models/mosaicbert/bert_layers.py", line 803, in forward
+    encoder_outputs = self.encoder(
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/ibex/project/c2254/zehua/llm-foundry/llmfoundry/models/mosaicbert/bert_layers.py", line 673, in forward
+    hidden_states = layer_module(hidden_states, cu_seqlens, seqlen, None, indices, attn_mask=attention_mask, bias=alibi_attn_mask, slopes=self.slopes)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/ibex/project/c2254/zehua/llm-foundry/llmfoundry/models/mosaicbert/bert_layers.py", line 506, in forward
+    attention_output = self.attention(normalized_hidden_states, cu_seqlens, seqlen,
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/ibex/project/c2254/zehua/llm-foundry/llmfoundry/models/mosaicbert/bert_layers.py", line 404, in forward
+    self_output = self.self(input_tensor, cu_seqlens, max_s, indices,
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/ibex/project/c2254/zehua/llm-foundry/llmfoundry/models/mosaicbert/bert_layers.py", line 329, in forward
+    attention = attention + mlp_output
+RuntimeError: The size of tensor a (512) must match the size of tensor b (65536) at non-singleton dimension 1
+[rank0]: [rank0]: [rank0]: Traceback (most recent call last):
+[rank0]: [rank0]: [rank0]:   File "/ibex/project/c2254/zehua/llm-foundry/scripts/train/train_bert.py", line 272, in <module>
+[rank0]: [rank0]: [rank0]:     main(cfg)
+[rank0]: [rank0]: [rank0]:   File "/ibex/project/c2254/zehua/llm-foundry/scripts/train/train_bert.py", line 258, in main
+[rank0]: [rank0]: [rank0]:     trainer.fit()
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/composer/trainer/trainer.py", line 2340, in fit
+[rank0]: [rank0]: [rank0]:     self._train_loop()
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/composer/trainer/trainer.py", line 2550, in _train_loop
+[rank0]: [rank0]: [rank0]:     total_loss_dict = self._train_batch(use_grad_scaling)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/composer/trainer/trainer.py", line 2759, in _train_batch
+[rank0]: [rank0]: [rank0]:     optimizer.step(
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/optim/lr_scheduler.py", line 75, in wrapper
+[rank0]: [rank0]: [rank0]:     return wrapped(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/optim/optimizer.py", line 391, in wrapper
+[rank0]: [rank0]: [rank0]:     out = func(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+[rank0]: [rank0]: [rank0]:     return func(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/composer/optim/decoupled_weight_decay.py", line 308, in step
+[rank0]: [rank0]: [rank0]:     loss = closure()
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/composer/trainer/trainer.py", line 2761, in <lambda>
+[rank0]: [rank0]: [rank0]:     **kwargs: self._train_microbatches(microbatches, loss_dict, **kwargs).item(),
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/composer/trainer/trainer.py", line 2883, in _train_microbatches
+[rank0]: [rank0]: [rank0]:     microbatch_loss_dict = self._train_microbatch(use_grad_scaling, current_batch_size, is_final_microbatch)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/composer/trainer/trainer.py", line 2959, in _train_microbatch
+[rank0]: [rank0]: [rank0]:     self.state.outputs = self.state.model(self.state.batch)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+[rank0]: [rank0]: [rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+[rank0]: [rank0]: [rank0]:     return forward_call(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/parallel/distributed.py", line 1593, in forward
+[rank0]: [rank0]: [rank0]:     else self._run_ddp_forward(*inputs, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/parallel/distributed.py", line 1411, in _run_ddp_forward
+[rank0]: [rank0]: [rank0]:     return self.module(*inputs, **kwargs)  # type: ignore[index]
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+[rank0]: [rank0]: [rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+[rank0]: [rank0]: [rank0]:     return forward_call(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/composer/models/huggingface.py", line 488, in forward
+[rank0]: [rank0]: [rank0]:     output = self.model(**batch)  # type: ignore (thirdparty)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+[rank0]: [rank0]: [rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+[rank0]: [rank0]: [rank0]:     return forward_call(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/project/c2254/zehua/llm-foundry/llmfoundry/models/mosaicbert/bert_layers.py", line 984, in forward
+[rank0]: [rank0]: [rank0]:     outputs = self.bert(
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+[rank0]: [rank0]: [rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+[rank0]: [rank0]: [rank0]:     return forward_call(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/project/c2254/zehua/llm-foundry/llmfoundry/models/mosaicbert/bert_layers.py", line 803, in forward
+[rank0]: [rank0]: [rank0]:     encoder_outputs = self.encoder(
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+[rank0]: [rank0]: [rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+[rank0]: [rank0]: [rank0]:     return forward_call(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/project/c2254/zehua/llm-foundry/llmfoundry/models/mosaicbert/bert_layers.py", line 673, in forward
+[rank0]: [rank0]: [rank0]:     hidden_states = layer_module(hidden_states, cu_seqlens, seqlen, None, indices, attn_mask=attention_mask, bias=alibi_attn_mask, slopes=self.slopes)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+[rank0]: [rank0]: [rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+[rank0]: [rank0]: [rank0]:     return forward_call(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/project/c2254/zehua/llm-foundry/llmfoundry/models/mosaicbert/bert_layers.py", line 506, in forward
+[rank0]: [rank0]: [rank0]:     attention_output = self.attention(normalized_hidden_states, cu_seqlens, seqlen,
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+[rank0]: [rank0]: [rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+[rank0]: [rank0]: [rank0]:     return forward_call(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/project/c2254/zehua/llm-foundry/llmfoundry/models/mosaicbert/bert_layers.py", line 404, in forward
+[rank0]: [rank0]: [rank0]:     self_output = self.self(input_tensor, cu_seqlens, max_s, indices,
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1532, in _wrapped_call_impl
+[rank0]: [rank0]: [rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/user/caoz0a/conda-environments/llm/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1541, in _call_impl
+[rank0]: [rank0]: [rank0]:     return forward_call(*args, **kwargs)
+[rank0]: [rank0]: [rank0]:   File "/ibex/project/c2254/zehua/llm-foundry/llmfoundry/models/mosaicbert/bert_layers.py", line 329, in forward
+[rank0]: [rank0]: [rank0]:     attention = attention + mlp_output
+[rank0]: [rank0]: [rank0]: RuntimeError: The size of tensor a (512) must match the size of tensor b (65536) at non-singleton dimension 1
+ERROR:composer.cli.launcher:Rank 1 crashed with exit code 1.
+
+train          Epoch   0:    0%|                         | 0/23530 [02:48<?, ?ba/s]                                     [A
+train          Epoch   0:    0%|                         | 0/23530 [02:48<?, ?ba/s]                                     
+
+                                                                                                                       
+wandb: - 0.008 MB of 0.008 MB uploadedERROR:composer.cli.launcher:Global rank 0 (PID 1655611) exited with code 1

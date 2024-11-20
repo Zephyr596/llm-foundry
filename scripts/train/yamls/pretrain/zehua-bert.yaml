@@ -9,7 +9,7 @@ variables:
   max_seq_len: 512
   mlm_probability: 0.3 # Mosaic BERT should use 30% masking for optimal performance
   # Run Name
-  run_name:  test-bert # If left blank, will be read from env var $RUN_NAME
+  run_name:  test-parallel-layers # If left blank, will be read from env var $RUN_NAME
 
 # Run Name
 run_name: ${variables.run_name}
@@ -44,8 +44,8 @@ train_loader:
     max_seq_len: ${variables.max_seq_len}
     shuffle: true
     mlm_probability: ${variables.mlm_probability}
-  drop_last: true
-  num_workers: 6
+  drop_last: false
+  num_workers: 16
 
 eval_loader:
   name: text
@@ -57,29 +57,29 @@ eval_loader:
     shuffle: false
     mlm_probability: 0.15 # We always evaluate at 15% masking for consistent comparison
   drop_last: false
-  num_workers: 6
+  num_workers: 16
 
 # Optimization
 scheduler:
-  name: linear_decay_with_warmup
+  name: cosine_with_warmup
   t_warmup: 0.06dur # to follow the linar scheduler with cooldown recipe
   alpha_f: 0.01
 
 optimizer:
   name: decoupled_adamw
-  lr: 5.0e-4 # Peak learning rate
+  lr: 1.0e-3 # Peak learning rate
   betas:
   - 0.9
-  - 0.96 # to follow the linar scheduler with cooldown recipe
+  - 0.98 # to follow the linar scheduler with cooldown recipe
   eps: 1.0e-06
-  weight_decay: 5.0e-5 # to follow the linar scheduler with cooldown recipe
+  weight_decay: 1.0e-5 # to follow the linar scheduler with cooldown recipe
 
 algorithms:
   low_precision_layernorm: {}
 
-max_duration: 20ep # Subsample the training data for ~275M samples
+max_duration: 5ep # Subsample the training data for ~275M samples
 eval_interval: 1ep
-global_train_batch_size: 4096
+global_train_batch_size: 2048
 
 # System
 seed: 17
@@ -95,18 +95,18 @@ console_log_interval: 100ba
 
 callbacks:
   speed_monitor:
-    window_size: 500
+    window_size: 100
   lr_monitor: {}
 
 # (Optional) W&B logging
 loggers:
   wandb:
-    project: llm-foundry-scripts_train-zehua-bert      # Fill this in
+    project: llm-foundry-scripts_train-zehua-bert-1117      # Fill this in
 
 # (Optional) Checkpoint to local filesystem or remote object store
-save_interval: 2000ba
-save_num_checkpoints_to_keep: 10  # Important, this cleans up checkpoints saved to DISK
-save_folder: ./{run_name}/checkpoints
+# save_interval: 2000ba
+# save_num_checkpoints_to_keep: 10  # Important, this cleans up checkpoints saved to DISK
+# save_folder: ./{run_name}/checkpoints
 
 # (Optional) Load from local filesystem or remote object store to
 # start from an existing model checkpoint;
